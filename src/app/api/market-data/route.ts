@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const endpoint = searchParams.get('endpoint');
+  let endpoint = searchParams.get('endpoint');
   const symbol = searchParams.get('symbol');
   const from = searchParams.get('from');
 
@@ -11,11 +11,15 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'API Key Missing' }, { status: 500 });
   }
 
+  // FORCE OVERRIDE: Redirect legacy request to working endpoint
+  if (endpoint === 'sp500_constituent') {
+    endpoint = 'etf-holder/SPY';
+  }
+
   const BASE_URL = 'https://financialmodelingprep.com/api/v3';
   let url = '';
 
-  if (endpoint === 'sp500_constituent') {
-      // Use ETF holder endpoint for SPY as sp500_constituent is deprecated/restricted
+  if (endpoint === 'etf-holder/SPY') {
       url = `${BASE_URL}/etf-holder/SPY?apikey=${apiKey}`;
   } else if (endpoint === 'historical-price-full' && symbol) {
       url = `${BASE_URL}/historical-price-full/${symbol}?apikey=${apiKey}`;
@@ -33,17 +37,18 @@ export async function GET(request: Request) {
         const errorText = await response.text();
         throw new Error(`Failed to fetch from FMP: ${response.status} ${errorText}`);
     }
-    const data = await response.json();
     
-    // Map data if it's the constituent request
-    if (endpoint === 'sp500_constituent') {
+    let data = await response.json();
+    
+    // If we fetched SPY holdings, map 'asset' -> 'symbol' to keep frontend happy
+    if (endpoint === 'etf-holder/SPY') {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const cleanedData = data.map((item: any) => ({
-            symbol: item.asset, // <--- This is the crucial fix
-            name: item.name || item.asset, 
-            sector: item.sector || 'Unknown'
+        data = data.map((item: any) => ({
+            ...item,
+            symbol: item.asset, // The frontend needs this key
+            name: item.name || item.asset,
+            sector: item.sector || 'Unknown' // Ensure sector exists for frontend typing
         }));
-        return NextResponse.json(cleanedData);
     }
     
     return NextResponse.json(data);
