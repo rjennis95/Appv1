@@ -152,7 +152,7 @@ export default function Dashboard() {
              {loadingIndex ? (
                  <div className="h-full flex items-center justify-center text-zinc-500">Loading Index...</div>
              ) : (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={400}>
                     <AreaChart data={sp500Data}>
                     <defs>
                         <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
@@ -178,7 +178,7 @@ export default function Dashboard() {
              {loadingIndex ? (
                  <div className="h-full flex items-center justify-center text-zinc-500">Loading...</div>
              ) : (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={400}>
                     <AreaChart data={sp500Data}>
                     <defs>
                         <linearGradient id="colorDist" x1="0" y1="0" x2="0" y2="1">
@@ -218,7 +218,7 @@ export default function Dashboard() {
             ) : null}
             
             {breadthData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={400}>
                     <LineChart data={breadthData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                     <XAxis dataKey="date" hide />
