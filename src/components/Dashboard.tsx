@@ -20,7 +20,6 @@ interface BreadthData {
 }
 
 export default function Dashboard() {
-  const [apiKey, setApiKey] = useState('');
   const [sp500Data, setSp500Data] = useState<ChartData[]>([]);
   const [breadthData, setBreadthData] = useState<BreadthData[]>([]);
   const [loadingBreadth, setLoadingBreadth] = useState(false);
@@ -29,24 +28,12 @@ export default function Dashboard() {
   
   const breadthFetchRef = useRef(false);
 
-  useEffect(() => {
-    // Load API key from env
-    const key = process.env.NEXT_PUBLIC_FMP_API_KEY;
-    if (key) {
-        setApiKey(key);
-    } else {
-        console.error('API Key missing');
-    }
-  }, []);
-
   // Fetch Index Data
   useEffect(() => {
-    if (!apiKey) return;
-
     const loadIndex = async () => {
       setLoadingIndex(true);
       try {
-        const data = await fetchSP500Index(apiKey);
+        const data = await fetchSP500Index();
         if (data && data.historical) {
             // Sort ascending
             const sorted: FMPHistoricalPrice[] = [...data.historical].reverse();
@@ -81,11 +68,10 @@ export default function Dashboard() {
     };
 
     loadIndex();
-  }, [apiKey]);
+  }, []);
 
   // Handle Breadth Data
   useEffect(() => {
-    if (!apiKey) return;
     if (breadthFetchRef.current) return;
 
     const loadBreadth = async () => {
@@ -106,7 +92,7 @@ export default function Dashboard() {
 
             if (cached.length === 0) {
                  // Empty
-                 const data = await processBreadth(apiKey, (c, t) => setProgress({ count: c, total: t }));
+                 const data = await processBreadth((c, t) => setProgress({ count: c, total: t }));
                  await saveBreadthData(data);
                  await setLastUpdated(today);
                  setBreadthData(data);
@@ -117,7 +103,7 @@ export default function Dashboard() {
                 
                 if (!lastUpdated || lastUpdated.lastUpdated !== today) {
                     console.log('Data outdated, updating...');
-                    const data = await processBreadth(apiKey, (c, t) => setProgress({ count: c, total: t }));
+                    const data = await processBreadth((c, t) => setProgress({ count: c, total: t }));
                     await saveBreadthData(data);
                     await setLastUpdated(today);
                     setBreadthData(data);
@@ -133,7 +119,7 @@ export default function Dashboard() {
     };
 
     loadBreadth();
-  }, [apiKey]);
+  }, []);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const CustomTooltip = ({ active, payload, label }: any) => {

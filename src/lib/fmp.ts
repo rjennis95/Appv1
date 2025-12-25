@@ -27,16 +27,16 @@ export interface FMPHistoricalResponse {
   historical: FMPHistoricalPrice[];
 }
 
-export async function getSP500Constituents(_apiKey: string): Promise<FMPConstituent[]> {
-  const response = await fetch('/api/constituents');
+export async function getSP500Constituents(): Promise<FMPConstituent[]> {
+  const response = await fetch('/api/market-data?endpoint=sp500_constituent');
   if (!response.ok) throw new Error('Failed to fetch constituents');
   return response.json();
 }
 
-export async function getHistoricalPrices(symbol: string, apiKey: string, from?: string): Promise<FMPHistoricalResponse> {
+export async function getHistoricalPrices(symbol: string, from?: string): Promise<FMPHistoricalResponse> {
   // Fetching slightly more than 1 year to ensure we have enough data for EMA calculation convergence
   // 1 year = 365 days. Let's fetch 450 days or use "from" date.
-  let url = `${BASE_URL}/historical-price-full/${symbol}?apikey=${apiKey}`;
+  let url = `/api/market-data?endpoint=historical-price-full&symbol=${symbol}`;
   if (from) {
       url += `&from=${from}`;
   } else {
@@ -74,19 +74,15 @@ export function calculateEMA(prices: number[], period: number): number[] {
   return emaArray;
 }
 
-export async function fetchSP500Index(apiKey: string) {
+export async function fetchSP500Index() {
     // S&P 500 symbol in FMP is usually ^GSPC.
-    return getHistoricalPrices('^GSPC', apiKey);
+    return getHistoricalPrices('^GSPC');
 }
 
-// Utility to sleep for rate limiting
-// const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
 export async function processBreadth(
-  apiKey: string, 
   onProgress: (count: number, total: number) => void
 ) {
-  const constituents = await getSP500Constituents(apiKey);
+  const constituents = await getSP500Constituents();
   const symbols = constituents.map((c) => c.symbol);
   
   // Prepare date range for history
@@ -104,7 +100,7 @@ export async function processBreadth(
   const BATCH_SIZE = 10;
   for (let i = 0; i < symbols.length; i += BATCH_SIZE) {
     const batch = symbols.slice(i, i + BATCH_SIZE);
-    const promises = batch.map((sym) => getHistoricalPrices(sym, apiKey, fromStr));
+    const promises = batch.map((sym) => getHistoricalPrices(sym, fromStr));
     
     const results = await Promise.all(promises);
     
