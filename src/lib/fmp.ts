@@ -27,8 +27,8 @@ export interface FMPHistoricalResponse {
   historical: FMPHistoricalPrice[];
 }
 
-export async function getSP500Constituents(apiKey: string): Promise<FMPConstituent[]> {
-  const response = await fetch(`${BASE_URL}/sp500_constituent?apikey=${apiKey}`);
+export async function getSP500Constituents(_apiKey: string): Promise<FMPConstituent[]> {
+  const response = await fetch('/api/constituents');
   if (!response.ok) throw new Error('Failed to fetch constituents');
   return response.json();
 }

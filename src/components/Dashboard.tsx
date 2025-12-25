@@ -160,7 +160,7 @@ export default function Dashboard() {
       <div className="flex flex-col gap-6 max-w-5xl mx-auto">
         
         {/* Panel 1: S&P 500 Price */}
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 h-80 flex flex-col">
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 h-[400px] flex flex-col">
           <h2 className="text-sm font-semibold text-zinc-400 mb-2">S&P 500 Index Price (1 Year)</h2>
           <div className="flex-1 min-h-0">
              {loadingIndex ? (
@@ -186,7 +186,7 @@ export default function Dashboard() {
         </div>
 
         {/* Panel 2: S&P 500 % Distance from 50-day EMA */}
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 h-80 flex flex-col">
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 h-[400px] flex flex-col">
           <h2 className="text-sm font-semibold text-zinc-400 mb-2">S&P 500 % Distance from 50d EMA</h2>
           <div className="flex-1 min-h-0">
              {loadingIndex ? (
@@ -214,7 +214,7 @@ export default function Dashboard() {
         </div>
 
         {/* Panel 3: Market Breadth */}
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 h-80 flex flex-col relative">
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 h-[400px] flex flex-col relative">
           <h2 className="text-sm font-semibold text-zinc-400 mb-2">Market Breadth (% Stocks &gt; 20d EMA)</h2>
           <div className="flex-1 min-h-0">
             {loadingBreadth && breadthData.length === 0 ? (

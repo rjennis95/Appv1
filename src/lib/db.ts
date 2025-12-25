@@ -13,6 +13,7 @@ interface BreadthDB extends DBSchema {
     value: {
         key: string;
         lastUpdated: string;
+        [key: string]: any; 
     }
   }
 }
