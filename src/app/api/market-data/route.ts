@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     if (endpoint === 'sp500_constituent') {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const cleanedData = data.map((item: any) => ({
-            symbol: item.asset,
+            symbol: item.asset, // <--- This is the crucial fix
             name: item.name || item.asset, 
             sector: item.sector || 'Unknown'
         }));
