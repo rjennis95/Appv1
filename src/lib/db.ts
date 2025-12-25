@@ -11,6 +11,7 @@ interface BreadthDB extends DBSchema {
   metadata: {
     key: string;
     value: {
+        key: string;
         lastUpdated: string;
     }
   }
