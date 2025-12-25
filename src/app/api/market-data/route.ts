@@ -15,7 +15,8 @@ export async function GET(request: Request) {
   let url = '';
 
   if (endpoint === 'sp500_constituent') {
-      url = `${BASE_URL}/sp500_constituent?apikey=${apiKey}`;
+      // Use ETF holder endpoint for SPY as sp500_constituent is deprecated/restricted
+      url = `${BASE_URL}/etf-holder/SPY?apikey=${apiKey}`;
   } else if (endpoint === 'historical-price-full' && symbol) {
       url = `${BASE_URL}/historical-price-full/${symbol}?apikey=${apiKey}`;
       if (from) {
@@ -33,6 +34,18 @@ export async function GET(request: Request) {
         throw new Error(`Failed to fetch from FMP: ${response.status} ${errorText}`);
     }
     const data = await response.json();
+    
+    // Map data if it's the constituent request
+    if (endpoint === 'sp500_constituent') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const cleanedData = data.map((item: any) => ({
+            symbol: item.asset,
+            name: item.name || item.asset, 
+            sector: item.sector || 'Unknown'
+        }));
+        return NextResponse.json(cleanedData);
+    }
+    
     return NextResponse.json(data);
   } catch (error: any) {
     console.error('API proxy error:', error);

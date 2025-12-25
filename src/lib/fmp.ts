@@ -28,7 +28,7 @@ export interface FMPHistoricalResponse {
 }
 
 export async function getSP500Constituents(): Promise<FMPConstituent[]> {
-  const response = await fetch('/api/market-proxy');
+  const response = await fetch('/api/market-data?endpoint=sp500_constituent');
   if (!response.ok) throw new Error('Failed to fetch constituents');
   return response.json();
 }
