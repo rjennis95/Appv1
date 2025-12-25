@@ -12,18 +12,18 @@ export async function GET(request: Request) {
 
   let finalUrl = '';
 
-  // 1. SAFE LIST: Use 'Stock Screener' instead of Banned 'Constituents'
-  // We fetch the top 100 largest stocks to simulate the S&P 500 list securely.
+  // 1. REAL FIX: Use the V4 'ETF Holdings' endpoint.
+  // This is the modern, supported way to get the full S&P 500 list (via SPY).
   if (endpoint === 'sp500_constituent') {
-    finalUrl = `https://financialmodelingprep.com/api/v3/stock-screener?marketCapMoreThan=50000000000&limit=100&apikey=${apiKey}`;
+    finalUrl = `https://financialmodelingprep.com/api/v4/etf-holdings?symbol=SPY&apikey=${apiKey}`;
   } 
-  // 2. SAFE CHART: Use 'Historical Chart' instead of Banned 'Price Full'
+  // 2. SAFE CHART: Use 'Historical Chart' (Modern Standard)
   else if (endpoint === 'historical-price-full') {
-    // Always use SPY as the proxy for the index (^GSPC) to ensure data availability
+    // Always use SPY as the proxy for the index (^GSPC)
     const targetSymbol = (symbol === '^GSPC') ? 'SPY' : symbol;
     finalUrl = `https://financialmodelingprep.com/api/v3/historical-chart/1day/${targetSymbol}?apikey=${apiKey}`;
   } 
-  // 3. Fallback for other endpoints
+  // 3. Passthrough for everything else
   else {
     finalUrl = `https://financialmodelingprep.com/api/v3/${endpoint}?apikey=${apiKey}`;
   }
@@ -38,26 +38,25 @@ export async function GET(request: Request) {
 
     let data = await res.json();
 
-    // ADAPTER 1: Map 'Screener' data to match 'Constituent' format
+    // ADAPTER: V4 returns { symbol: 'SPY', holdings: [...] }
+    // We need to extract the 'holdings' array and map it for the frontend.
     if (endpoint === 'sp500_constituent') {
+      // V4 structure is different, we extract the array
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data = data.map((item: any) => ({
-        symbol: item.symbol,
-        name: item.companyName, // Screener uses 'companyName', Frontend needs 'name'
-        sector: item.sector,
-        marketCap: item.marketCap
+      const holdings = (data as any).holdings || data; 
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data = holdings.map((item: any) => ({
+        symbol: item.asset,    // V4 uses 'asset'
+        name: item.name || item.asset,
+        sector: item.sector || 'Unknown',
+        weight: item.weightPercentage || 0
       }));
     }
 
-    // ADAPTER 2: Map 'Historical Chart' (Array) to 'Historical Price Full' (Object)
-    // The frontend expects { symbol: "...", historical: [...] }
-    if (endpoint === 'historical-price-full') {
-        if (Array.isArray(data)) {
-            return NextResponse.json({
-                symbol: symbol,
-                historical: data // The new endpoint returns the array directly
-            });
-        }
+    // Chart Adapter
+    if (endpoint === 'historical-price-full' && Array.isArray(data)) {
+         return NextResponse.json({ symbol: symbol, historical: data });
     }
 
     return NextResponse.json(data);
