@@ -10,28 +10,26 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'API Key Missing' }, { status: 500 });
   }
 
-  // FIXED: Declare variable ONCE to prevent 'Build Failed' error
+  // --- VERIFIED: Declared exactly ONCE ---
   let finalUrl = '';
 
-  // CASE 1: Workaround for Banned "Constituents" Endpoint
-  // We fetch SPY ETF holdings instead, which is allowed.
+  // 1. Intercept 'Constituents' -> Swap to SPY ETF
   if (endpoint === 'sp500_constituent') {
     finalUrl = `https://financialmodelingprep.com/api/v3/etf-holder/SPY?apikey=${apiKey}`;
   } 
-  // CASE 2: Workaround for Banned "S&P 500 Index History"
-  // ^GSPC is often restricted. We fetch SPY history instead.
+  // 2. Intercept 'Index History' -> Swap to SPY History
   else if (endpoint === 'historical-price-full' && symbol === '^GSPC') {
      const fromDate = searchParams.get('from');
      const dateQuery = fromDate ? `&from=${fromDate}` : '';
      finalUrl = `https://financialmodelingprep.com/api/v3/historical-price-full/SPY?apikey=${apiKey}${dateQuery}`;
   }
-  // CASE 3: Normal History Requests (e.g. NVDA, AAPL)
+  // 3. Normal History
   else if (endpoint === 'historical-price-full' && symbol) {
      const fromDate = searchParams.get('from');
      const dateQuery = fromDate ? `&from=${fromDate}` : '';
      finalUrl = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}${dateQuery}`;
   }
-  // CASE 4: Default passthrough for everything else
+  // 4. Default Fallback
   else {
     finalUrl = `https://financialmodelingprep.com/api/v3/${endpoint}?apikey=${apiKey}`;
   }
@@ -46,8 +44,7 @@ export async function GET(request: Request) {
 
     let data = await res.json();
 
-    // MAPPING FIX: The SPY ETF endpoint uses 'asset' instead of 'symbol'.
-    // We map it back so the frontend charts don't crash.
+    // Mapping Fix (Asset -> Symbol)
     if (endpoint === 'sp500_constituent') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data = data.map((item: any) => ({
