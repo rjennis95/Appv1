@@ -28,7 +28,7 @@ export interface FMPHistoricalResponse {
 }
 
 export async function getSP500Constituents(): Promise<FMPConstituent[]> {
-  const response = await fetch('/api/market-data?endpoint=sp500_constituent');
+  const response = await fetch('/api/market?endpoint=sp500_constituent');
   if (!response.ok) throw new Error('Failed to fetch constituents');
   return response.json();
 }
@@ -36,7 +36,7 @@ export async function getSP500Constituents(): Promise<FMPConstituent[]> {
 export async function getHistoricalPrices(symbol: string, from?: string): Promise<FMPHistoricalResponse> {
   // Fetching slightly more than 1 year to ensure we have enough data for EMA calculation convergence
   // 1 year = 365 days. Let's fetch 450 days or use "from" date.
-  let url = `/api/market-data?endpoint=historical-price-full&symbol=${symbol}`;
+  let url = `/api/market?endpoint=historical-price-full&symbol=${symbol}`;
   if (from) {
       url += `&from=${from}`;
   } else {
