@@ -10,27 +10,28 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'API Key Missing' }, { status: 500 });
   }
 
-  // 1. Determine the Correct URL (Declared ONLY ONCE to fix build error)
+  // FIXED: Declare variable ONCE to prevent 'Build Failed' error
   let finalUrl = '';
 
-  // Case A: The "Banned" Legacy Constituent Endpoint -> Swap to SPY ETF Holdings
+  // CASE 1: Workaround for Banned "Constituents" Endpoint
+  // We fetch SPY ETF holdings instead, which is allowed.
   if (endpoint === 'sp500_constituent') {
     finalUrl = `https://financialmodelingprep.com/api/v3/etf-holder/SPY?apikey=${apiKey}`;
   } 
-  // Case B: Historical Price for S&P 500 Index (^GSPC) -> Swap to SPY ETF History
-  // (Indices like ^GSPC are often restricted; SPY is not)
+  // CASE 2: Workaround for Banned "S&P 500 Index History"
+  // ^GSPC is often restricted. We fetch SPY history instead.
   else if (endpoint === 'historical-price-full' && symbol === '^GSPC') {
      const fromDate = searchParams.get('from');
      const dateQuery = fromDate ? `&from=${fromDate}` : '';
      finalUrl = `https://financialmodelingprep.com/api/v3/historical-price-full/SPY?apikey=${apiKey}${dateQuery}`;
   }
-  // Case C: Normal Historical Price (for other stocks)
+  // CASE 3: Normal History Requests (e.g. NVDA, AAPL)
   else if (endpoint === 'historical-price-full' && symbol) {
      const fromDate = searchParams.get('from');
      const dateQuery = fromDate ? `&from=${fromDate}` : '';
      finalUrl = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}${dateQuery}`;
   }
-  // Case D: Default/Fallback for any other endpoint
+  // CASE 4: Default passthrough for everything else
   else {
     finalUrl = `https://financialmodelingprep.com/api/v3/${endpoint}?apikey=${apiKey}`;
   }
@@ -45,20 +46,17 @@ export async function GET(request: Request) {
 
     let data = await res.json();
 
-    // 2. Map Data if we used the SPY workaround (Case A)
-    // The ETF endpoint uses 'asset' instead of 'symbol', so we fix it here.
+    // MAPPING FIX: The SPY ETF endpoint uses 'asset' instead of 'symbol'.
+    // We map it back so the frontend charts don't crash.
     if (endpoint === 'sp500_constituent') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data = data.map((item: any) => ({
         ...item,
-        symbol: item.asset, // Map 'asset' -> 'symbol'
+        symbol: item.asset, 
         name: item.name || item.asset,
         sector: item.sector || 'Unknown'
       }));
     }
-    // 3. Map Data if we used the SPY History workaround (Case B)
-    // If the frontend asked for ^GSPC but we fetched SPY, we just return the SPY data.
-    // The structure is usually compatible ({ symbol: 'SPY', historical: [...] })
 
     return NextResponse.json(data);
 
