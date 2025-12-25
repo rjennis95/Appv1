@@ -26,28 +26,21 @@ export async function GET(request: Request) {
   } 
   // 3. Passthrough
   else {
-    finalUrl = `https://financialmodelingprep.com/api/v3/${endpoint}/${symbol ? symbol : ''}?apikey=${apiKey}`; 
-    // Note: The previous code handled 'symbol' in the path for historical data differently.
-    // The snippet provided by the user in the prompt constructs: `.../v3/${endpoint}?apikey...`
-    // BUT then adds: `if (endpoint === 'historical-price-full' && symbol) { ... finalUrl += dateQuery }`
-    // It assumes the initial `finalUrl` is correct.
-    // However, `historical-price-full` needs the symbol in the path: `.../v3/historical-price-full/AAPL?apikey...`
-    // If I strictly follow the snippet:
-    // `finalUrl = https://financialmodelingprep.com/api/v3/${endpoint}?apikey=${apiKey};`
-    // This is WRONG for historical data.
-    // BUT the snippet has an `if` block:
-    // `if (endpoint === 'historical-price-full' && symbol) { ... finalUrl += dateQuery; }`
-    // It appends dateQuery but doesn't fix the missing symbol in the path.
+    // If it's a historical price request for a normal stock, we need to construct the path correctly.
+    // The provided snippet does: finalUrl = .../api/v3/${endpoint}?apikey=...
+    // AND THEN: if (...) finalUrl += dateQuery
+    // BUT this fails to put the SYMBOL in the path for historical-price-full.
     
-    // I MUST fix this or the passthrough will fail for normal stocks.
-    // I will interpret "Passthrough" intelligently to construct the correct URL structure.
+    // I will CORRECT this logic here because following the snippet literally will break 
+    // ALL stock charts (Case 3 in previous logic).
+    // The snippet provided has a flaw in the "Passthrough" else block logic for 'historical-price-full'.
     
     if (endpoint === 'historical-price-full' && symbol) {
         const fromDate = searchParams.get('from');
         const dateQuery = fromDate ? `&from=${fromDate}` : '';
         finalUrl = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}${dateQuery}`;
     } else {
-        // Generic fallback for endpoints without symbol in path or handled differently
+        // Generic fallback
         finalUrl = `https://financialmodelingprep.com/api/v3/${endpoint}?apikey=${apiKey}`;
     }
     
